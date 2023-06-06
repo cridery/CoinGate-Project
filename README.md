@@ -17,6 +17,7 @@ These instructions will guide you to get a copy of the project up and running on
 1. Clone the repository:
 ```bash
 git clone https://github.com/cridery/coingate-project.git
+```bash
 
 2. Navigate to the backend directory:
 cd coingate-project/backend
