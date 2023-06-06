@@ -47,7 +47,7 @@ cd path-to-your-project/frontend
 ```bash
 npm install
 ```
-9. Start the React development server:
+9. Start the React development server (localhost:3000 is preferred) :
 ```bash
 npm run start
 ```
