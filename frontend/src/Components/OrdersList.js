@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { getOrders } from "../Services/orderServices"
+import { getOrders, getCurrencies } from "../Services/orderServices"
 
 const OrdersList = ({ setCreateOrder, setOrderId, refreshKey }) => {
     const [loading, setLoading] = useState(true)
@@ -18,11 +18,21 @@ const OrdersList = ({ setCreateOrder, setOrderId, refreshKey }) => {
                 setLoading(false)
             }
         })
-    }, [ refreshKey])
+    }, [refreshKey])
+    
+    
+    useEffect(() => {
+        getCurrencies().then((response) => {
+            if (response.status === "success") {
+                console.log(response)
+            }
+        })
+    }, [])
 
     if (loading) {
         return <p>Loading...</p>
     }
+
 
     return (
         <>
