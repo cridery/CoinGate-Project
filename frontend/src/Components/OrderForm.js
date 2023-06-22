@@ -1,6 +1,7 @@
-import React, { useState } from "react"
-import { createOrder } from "../Services/orderServices"
+import React, { useState, useEffect } from "react"
+import { createOrder, getCurrencies } from "../Services/orderServices"
 import Notification from "./Notification"
+
 
 const OrderForm = ({refreshOrders }) => {
     const [order, setOrder] = useState({
@@ -12,6 +13,8 @@ const OrderForm = ({refreshOrders }) => {
         description: "",
         purchaser_email: "",
     })
+
+    const [currencies, setCurrencies] = useState([])
 
     const [notification, setNotification] = useState({
         type: "",
@@ -27,7 +30,7 @@ const OrderForm = ({refreshOrders }) => {
         e.preventDefault()
         try {
             const response = await createOrder(order)
-            if (response.status === "success") {
+            if (response) {
                 refreshOrders()
                 setNotification({
                     type: "success",
@@ -58,6 +61,14 @@ const OrderForm = ({refreshOrders }) => {
         }, 3000)
     }
 
+    useEffect(() => {
+        getCurrencies().then((currencies) => {
+            if (currencies) {
+                setCurrencies(currencies.currencies)
+            }
+        })
+    }, [])
+
     return (
         <>
             {notification.visible && (
@@ -87,20 +98,39 @@ const OrderForm = ({refreshOrders }) => {
                     placeholder="Price Amount"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 />
-                <input
+                <select
                     name="price_currency"
                     value={order.price_currency}
                     onChange={handleChange}
-                    placeholder="Price Currency"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                />
-                <input
+                >
+                    <option value="">Select Currency</option>
+                    {currencies?.map((currency, key) => (
+                        <option key={key} value={currency?.symbol}>
+                            {currency?.title} ({currency?.symbol})
+                        </option>
+                    ))}
+                </select>
+                {/* <input
                     name="receive_currency"
                     value={order.receive_currency}
                     onChange={handleChange}
                     placeholder="Receive Currency"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                />
+                /> */}
+                <select
+                    name="receive_currency"
+                    value={order.receive_currency}
+                    onChange={handleChange}
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                >
+                    <option value="">Select Currency</option>
+                    {currencies?.map((currency, key) => (
+                        <option key={key} value={currency?.symbol}>
+                            {currency?.title} ({currency?.symbol})
+                        </option>
+                    ))}
+                </select>
                 <input
                     name="title"
                     value={order.title}

@@ -8,4 +8,5 @@ Rails.application.routes.draw do
   get '/orders', to: 'orders#get_orders'
   get '/orders/:id', to: 'orders#get_order'
   post '/orders/:id/binance/cancel', to: 'orders#cancel_order'
+
 end

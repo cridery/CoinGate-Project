@@ -6,8 +6,13 @@ class OrdersController < ApplicationController
     before_action :initialize_coingate_service
 
     def create
-        order_params = order_params().merge(callback_url: Rails.configuration.coingate_callback_url)
-        response = @coingate_service.create_order(order_params)
+        order_data = order_params().merge(
+            callback_url: Rails.configuration.coingate_callback_url,
+            cancel_url: Rails.configuration.coingate_cancel_url,
+            success_url: Rails.configuration.coingate_success_url
+        )
+
+        response = @coingate_service.create_order(order_data)
 
         if response.code == 200
             order_data = response.parsed_response
@@ -22,21 +27,21 @@ class OrdersController < ApplicationController
             )
 
             if order.save
-                render json: { status: 'success', order: order }, status: 200
+                render json: { order: order }, status: 200
             else
-                render json: { status: 'error', message: order.errors.full_messages }, status: 422
+                render json: { message: order.errors.full_messages }, status: 422
             end
         else
-            render json: { status: 'error', message: 'Failed to create order at CoinGate' }, status: 500
+            render json: { message: 'Failed to create order at CoinGate' }, status: 500
         end
     end
 
     def get_currencies
         response = @coingate_service.get_currencies
         if response.code == 200
-            render json: { status: 'success', currencies: response.parsed_response }, status: 200
+            render json: { currencies: response.parsed_response }, status: 200
         else
-            render json: { status: 'error', message: 'Failed to fetch currencies from CoinGate' }, status: 500
+            render json: { message: 'Failed to fetch currencies from CoinGate' }, status: 500
         end
     end
 
@@ -44,27 +49,27 @@ class OrdersController < ApplicationController
         response = @coingate_service.get_orders
         if response.code == 200
             orders_array = response.parsed_response['orders']
-            render json: { status: 'success', orders: orders_array }, status: 200
+            render json: { orders: orders_array }, status: 200
         else
-            render json: { status: 'error', message: 'Failed to fetch orders from CoinGate' }, status: 500
+            render json: { message: 'Failed to fetch orders from CoinGate' }, status: 500
         end
     end
 
     def get_order
         response = @coingate_service.get_order(params[:id])
         if response.code == 200
-            render json: { status: 'success', order: response.parsed_response }, status: 200
+            render json: { order: response.parsed_response }, status: 200
         else
-            render json: { status: 'error', message: 'Failed to fetch order from CoinGate' }, status: 500
+            render json: { message: 'Failed to fetch order from CoinGate' }, status: 500
         end
     end
 
     def cancel_order
         response = @coingate_service.cancel_order(params[:id])
         if response.code == 200
-            render json: { status: 'success', order: response.parsed_response }, status: 200
+            render json: { order: response.parsed_response }, status: 200
         else
-            render json: { status: 'error', message: 'Failed to cancel order at CoinGate' }, status: 500
+            render json: { message: 'Failed to cancel order at CoinGate' }, status: 500
         end
     end
 
@@ -74,9 +79,9 @@ class OrdersController < ApplicationController
 
         if order.present?
             order.update(status: params[:status])
-            render json: { status: 'success', order: order }, status: 200
+            render json: { order: order }, status: 200
         else
-            render json: { status: 'error', message: 'Order not found' }, status: 404
+            render json: { message: 'Order not found' }, status: 404
         end
     end
 
@@ -90,7 +95,7 @@ class OrdersController < ApplicationController
             :receive_currency,
             :title,
             :description,
-            :purchaser_email,
+            :purchaser_email
         )
     end
 

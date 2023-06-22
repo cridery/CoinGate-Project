@@ -6,7 +6,7 @@ const OrderInformation = ({ orderId }) => {
 
     useEffect(() => {
         getOrder(orderId).then((response) => {
-            if (response?.status === "success") {
+            if (response) {
                 setOrder(response.order)
             } else {
                 console.log(response)
@@ -27,7 +27,23 @@ const OrderInformation = ({ orderId }) => {
                     <p>Price Amount: {order?.price_amount}</p>
                     <p>Price Currency: {order?.price_currency}</p>
                     <p>Receive Currency: {order?.receive_currency}</p>
+                    <p>Status: {order?.status}</p>
+                    {order?.title && <p>Title: {order?.title}</p>}
+                    {order?.description && (
+                        <p>Description: {order?.description}</p>
+                    )}
                 </div>
+                {order?.status === "new" && <div>
+                    <button className="text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                        <a
+                            href={order?.payment_url}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Pay
+                        </a>
+                    </button>
+                </div>}
                 {/* Works only for binance orders */}
                 {/* <button
                     onClick={() => {

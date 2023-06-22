@@ -7,7 +7,9 @@ require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
-
+  config.coingate_callback_url = "http://localhost:3000/orders/callback"
+  config.coingate_success_url = "http://localhost:3000/orders/success"
+  config.coingate_cancel_url = "http://localhost:3000/orders/cancel"
   # Turn false under Spring and add config.action_view.cache_template_loading = true.
   config.cache_classes = true
 

@@ -18,7 +18,8 @@ class CoinGateService
 
     def get_currencies
         self.class.get(
-            '/currencies'
+            '/currencies',
+            headers: authorization_header
         )
     end
 
@@ -44,7 +45,7 @@ class CoinGateService
     end
 
     private 
-    def authorization_header
-        { 'Authorization' => "Bearer #{@token}" }
-    end
+        def authorization_header
+            { 'Authorization' => "Bearer #{@token}" }
+        end
 end
