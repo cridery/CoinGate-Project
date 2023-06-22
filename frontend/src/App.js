@@ -18,7 +18,7 @@ function App() {
         <div className="App">
             <Router>
                 <div className="flex ">
-                    <div className="w-1/5 border-r h-screen">
+                    <div className="w-1/5 border-r h-full">
                         <OrdersList
                             refreshKey={refreshKey}
                             setOrderId={setOrderId}
