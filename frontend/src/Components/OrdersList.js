@@ -23,7 +23,7 @@ const OrdersList = ({ setOrderId, refreshKey }) => {
     useEffect(() => {
         getCurrencies().then((currencies) => {
             if (currencies) {
-                console.log(currencies)
+                // console.log(currencies)
             }
         })
     }, [])
