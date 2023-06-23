@@ -7,7 +7,7 @@ const OrderInformation = ({ orderId }) => {
     useEffect(() => {
         getOrder(orderId).then((response) => {
             if (response) {
-                setOrder(response.order)
+                setOrder(response)
             } else {
                 console.log(response)
             }

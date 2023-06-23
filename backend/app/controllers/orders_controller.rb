@@ -1,106 +1,96 @@
-require 'httparty'
-require 'coin_gate_service'
-
 class OrdersController < ApplicationController
-    skip_before_action :verify_authenticity_token
-    before_action :initialize_coingate_service
+  skip_before_action :verify_authenticity_token
+  before_action :initialize_coingate_service
 
-    def create
-        order_data = order_params().merge(
-            callback_url: Rails.configuration.coingate_callback_url,
-            cancel_url: Rails.configuration.coingate_cancel_url,
-            success_url: Rails.configuration.coingate_success_url
-        )
+  def create
+    order_data = order_params.to_h.merge(callback_urls)
+    response = @coingate_service.create_order(order_data)
 
-        response = @coingate_service.create_order(order_data)
-
-        if response.code == 200
-            order_data = response.parsed_response
-            order = Order.new(
-                order_id: order_data['id'],
-                price_amount: order_data['price_amount'],
-                price_currency: order_data['price_currency'],
-                receive_currency: order_data['receive_currency'],
-                title: order_data['title'],
-                description: order_data['description'],
-                status: order_data['status'],
-            )
-
-            if order.save
-                render json: { order: order }, status: 200
-            else
-                render json: { message: order.errors.full_messages }, status: 422
-            end
-        else
-            render json: { message: 'Failed to create order at CoinGate' }, status: 500
-        end
+    if response.success?
+      order_attributes = extract_order_attributes(response.parsed_response)
+      order = save_order(order_attributes)
+      order ? success_response(order) : failure_response(order)
+    else
+      external_service_error_response
     end
+  end
 
-    def get_currencies
-        response = @coingate_service.get_currencies
-        if response.code == 200
-            render json: { currencies: response.parsed_response }, status: 200
-        else
-            render json: { message: 'Failed to fetch currencies from CoinGate' }, status: 500
-        end
-    end
+  def get_currencies
+    response = @coingate_service.get_currencies
+    response.success? ? success_response(response.parsed_response) : external_service_error_response
+  end
 
-    def get_orders
-        response = @coingate_service.get_orders
-        if response.code == 200
-            orders_array = response.parsed_response['orders']
-            render json: { orders: orders_array }, status: 200
-        else
-            render json: { message: 'Failed to fetch orders from CoinGate' }, status: 500
-        end
-    end
+  def get_orders
+    response = @coingate_service.get_orders
+    response.success? ? success_response(response.parsed_response) : external_service_error_response
+  end
 
-    def get_order
-        response = @coingate_service.get_order(params[:id])
-        if response.code == 200
-            render json: { order: response.parsed_response }, status: 200
-        else
-            render json: { message: 'Failed to fetch order from CoinGate' }, status: 500
-        end
-    end
+  def get_order
+    response = @coingate_service.get_order(params[:id])
+    response.success? ? success_response(response.parsed_response) : external_service_error_response
+  end
 
-    def cancel_order
-        response = @coingate_service.cancel_order(params[:id])
-        if response.code == 200
-            render json: { order: response.parsed_response }, status: 200
-        else
-            render json: { message: 'Failed to cancel order at CoinGate' }, status: 500
-        end
-    end
+  def cancel_order
+    response = @coingate_service.cancel_order(params[:id])
+    response.success? ? success_response(response.parsed_response) : external_service_error_response
+  end
 
-    def callback
-        order_id = params[:order_id]
-        order = Order.find_by(order_id: order_id)
+  def callback
+    order = Order.find_by(payment_processor_order_id: params[:payment_processor_order_id])
+    order ? success_response(order.update(status: params[:status])) : not_found_response
+  end
 
-        if order.present?
-            order.update(status: params[:status])
-            render json: { order: order }, status: 200
-        else
-            render json: { message: 'Order not found' }, status: 404
-        end
-    end
+  private
 
-    private 
+  attr_reader :coingate_service
 
-    def order_params
-        params.require(:order).permit(
-            :order_id,
-            :price_amount,
-            :price_currency,
-            :receive_currency,
-            :title,
-            :description,
-            :purchaser_email
-        )
-    end
+  def order_params
+    params.require(:order).permit(
+      :order_id,
+      :price_amount,
+      :price_currency,
+      :receive_currency,
+      :title,
+      :description,
+      :purchaser_email
+    )
+  end
 
-    def initialize_coingate_service
-        @coingate_service = CoinGateService.new(ENV['COINGATE_API_KEY'])
-    end
+  def initialize_coingate_service
+    # @coingate_service = CoinGateService.new(ENV['COINGATE_API_KEY'])
+    @coingate_service = CoinGateService.new
+  end
 
+  def callback_urls
+    {
+      callback_url: Rails.configuration.coingate_callback_url,
+      cancel_url: Rails.configuration.coingate_cancel_url,
+      success_url: Rails.configuration.coingate_success_url
+    }
+  end
+
+  def save_order(order_attributes)
+    @order = Order.new(order_attributes)
+    @order.save ? @order : nil
+  end
+
+  def extract_order_attributes(api_response)
+    api_response.slice('payment_processor_order_id', 'price_amount', 'price_currency', 'receive_currency', 'title', 'description', 'purchaser_email')
+  end
+
+  def success_response(data)
+    render json: data, status: :ok
+  end
+
+  def failure_response(order)
+    render json: { message: order.errors.full_messages }, status: :unprocessable_entity
+  end
+
+  def external_service_error_response
+    render json: { message: 'Failed to communicate with CoinGate' }, status: :internal_server_error
+  end
+
+  def not_found_response
+    render json: { message: 'Order not found' }, status: :not_found
+  end
 end

@@ -6,7 +6,6 @@ const OrdersList = ({ setOrderId, refreshKey }) => {
     const [loading, setLoading] = useState(true)
 
     const [orders, setOrders] = useState([])
-
     const handleClick = (order) => {
         setOrderId(order?.id)
     }

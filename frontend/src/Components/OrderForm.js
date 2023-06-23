@@ -64,7 +64,7 @@ const OrderForm = ({refreshOrders }) => {
     useEffect(() => {
         getCurrencies().then((currencies) => {
             if (currencies) {
-                setCurrencies(currencies.currencies)
+                setCurrencies(currencies)
             }
         })
     }, [])
