@@ -57,7 +57,6 @@ class OrdersController < ApplicationController
   end
 
   def initialize_coingate_service
-    # @coingate_service = CoinGateService.new(ENV['COINGATE_API_KEY'])
     @coingate_service = CoinGateService.new
   end
 
