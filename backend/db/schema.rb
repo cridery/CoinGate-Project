@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_06_06_081724) do
+ActiveRecord::Schema[7.0].define(version: 2023_07_25_102554) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -29,6 +29,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_06_081724) do
     t.string "token"
     t.string "purchaser_email"
     t.string "status"
+    t.string "coingate_order_id"
+    t.index ["coingate_order_id"], name: "index_orders_on_coingate_order_id"
   end
 
 end

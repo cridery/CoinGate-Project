@@ -1,32 +1,41 @@
 class OrdersController < ApplicationController
   skip_before_action :verify_authenticity_token
-  before_action :initialize_coingate_service
 
-  def create
-    order_data = order_params.to_h.merge(callback_urls)
-    response = @coingate_service.create_order(order_data)
-
-    if response.success?
-      order_attributes = extract_order_attributes(response.parsed_response)
-      order = save_order(order_attributes)
-      order ? success_response(order) : failure_response(order)
-    else
-      external_service_error_response
-    end
-  end
-
-  def get_currencies
-    response = @coingate_service.get_currencies
+  def index
+    response = CoinGateService.get_orders
     response.success? ? success_response(response.parsed_response) : external_service_error_response
   end
 
-  def get_orders
-    response = @coingate_service.get_orders
+  def new
+    @order = Order.new
+  end
+  
+
+  def create
+    @order = Order.new(order_params)
+    
+    if @order.save
+      CoinGateService.new(@order).create_order
+      render json: {}, status: :ok
+    else
+      head 500
+    end
+  end
+
+  def show
+    @order = Order.find_by(coingate_order_id: params[:id])
+    response = CoinGateService.new(@order).get_order
+    response.success? ? success_response(response.parsed_response) : external_service_error_response
+  end
+
+  def currencies
+    response = CoinGateService.get_currencies
     response.success? ? success_response(response.parsed_response) : external_service_error_response
   end
 
   def get_order
-    response = @coingate_service.get_order(params[:id])
+    @order = Order.find_by(coingate_order_id: params[:id])
+    response = CoinGateService.new(@order).get_order
     response.success? ? success_response(response.parsed_response) : external_service_error_response
   end
 
@@ -42,8 +51,6 @@ class OrdersController < ApplicationController
 
   private
 
-  attr_reader :coingate_service
-
   def order_params
     params.require(:order).permit(
       :order_id,
@@ -55,11 +62,7 @@ class OrdersController < ApplicationController
       :purchaser_email
     )
   end
-
-  def initialize_coingate_service
-    @coingate_service = CoinGateService.new
-  end
-
+  
   def callback_urls
     {
       callback_url: Rails.configuration.coingate_callback_url,
@@ -92,4 +95,5 @@ class OrdersController < ApplicationController
   def not_found_response
     render json: { message: 'Order not found' }, status: :not_found
   end
+
 end
